@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cumberland County Northern Lights Forecast | Live Aurora</title>
+  <meta name="description" content="Real-time Northern Lights forecast for Cumberland County, Maine. NOAA OVATION map, live Kp index, 27-day outlook, moon phase and optimal viewing conditions. Accurate, official data." />
+  <link rel="preconnect" href="https://services.swpc.noaa.gov" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050510;
+      --card: #0d0d1a;
+      --accent: #00ff9d;
+      --accent2: #7b5cff;
+      --text: #e8e8f0;
+      --muted: #8a8aa0;
+      --danger: #ff4d6d;
+      --warn: #ffb84d;
+      --good: #00ff9d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(0,255,157,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(123,92,255,0.1) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 100%, rgba(0,100,255,0.06) 0%, transparent 50%);
+    }
+    header {
+      padding: 1.5rem 1rem 1rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(1.4rem, 4vw, 2.1rem);
+      letter-spacing: 0.05em;
+      background: linear-gradient(90deg, #00ff9d, #7b5cff, #00d4ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.3rem;
+    }
+    .subtitle { color: var(--muted); font-size: 0.95rem; }
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(0,255,157,0.12); color: var(--accent);
+      font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.7rem;
+      border-radius: 999px; margin-top: 0.6rem;
+    }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    main { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    .grid { display: grid; gap: 1.25rem; }
+    @media (min-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+    .card h2 {
+      font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--muted); margin-bottom: 0.75rem; font-weight: 600;
+    }
+    .big-number {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 3rem; font-weight: 700; line-height: 1;
+    }
+    .kp-bar {
+      display: flex; gap: 3px; margin-top: 0.75rem; height: 10px;
+      border-radius: 5px; overflow: hidden;
+    }
+    .kp-seg { flex: 1; background: #1a1a2e; }
+    .kp-seg.active { background: var(--accent); }
+    .kp-seg.g1 { background: #ffb84d; }
+    .kp-seg.g2 { background: #ff8c42; }
+    .kp-seg.g3 { background: #ff4d6d; }
+    .status-pill {
+      display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px;
+      font-size: 0.8rem; font-weight: 600; margin-top: 0.4rem;
+    }
+    .status-quiet { background: rgba(0,255,157,0.15); color: var(--good); }
+    .status-active { background: rgba(255,184,77,0.15); color: var(--warn); }
+    .status-storm { background: rgba(255,77,109,0.2); color: var(--danger); }
+    .ovation-img {
+      width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);
+      background: #000;
+    }
+    .map-wrapper { position: relative; }
+    .map-label {
+      position: absolute; bottom: 10px; left: 10px;
+      background: rgba(0,0,0,0.7); padding: 0.3rem 0.6rem;
+      border-radius: 6px; font-size: 0.7rem; color: #ccc;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 0.55rem 0.4rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    th { color: var(--muted); font-weight: 500; font-size: 0.75rem; text-transform: uppercase; }
+    .kp-cell { font-family: 'Orbitron', sans-serif; font-weight: 600; }
+    .moon-illum {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: #1a1a2e; margin: 0 auto 0.75rem;
+      position: relative; overflow: hidden;
+      box-shadow: inset -10px 0 0 0 #f5f5f0;
+    }
+    .verdict {
+      font-size: 1.1rem; font-weight: 600; padding: 0.9rem 1rem;
+      border-radius: 12px; text-align: center; margin-top: 0.5rem;
+    }
+    .verdict-good { background: rgba(0,255,157,0.12); border: 1px solid rgba(0,255,157,0.3); color: var(--good); }
+    .verdict-maybe { background: rgba(255,184,77,0.12); border: 1px solid rgba(255,184,77,0.3); color: var(--warn); }
+    .verdict-poor { background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.25); color: var(--danger); }
+    .tips { font-size: 0.9rem; color: var(--muted); }
+    .tips li { margin-bottom: 0.4rem; }
+    footer {
+      text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: 0.8rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    .refresh-note { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
+    .loading { opacity: 0.5; }
+    .error { color: var(--danger); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CUMBERLAND AURORA</h1>
+    <p class="subtitle">Northern Lights Forecast · Cumberland County, Maine</p>
+    <div class="live-badge"><span class="live-dot"></span> LIVE · NOAA SWPC</div>
+  </header>
+
+  <main>
+    <!-- Current Conditions -->
+    <section class="grid grid-3" style="margin-bottom:1.25rem">
+      <div class="card">
+        <h2>Current Kp Index</h2>
+        <div class="big-number" id="kp-now">–</div>
+        <div id="kp-status" class="status-pill">Loading…</div>
+        <div class="kp-bar" id="kp-bar"></div>
+        <p class="refresh-note" id="kp-updated">—</p>
+      </div>
+      <div class="card">
+        <h2>Aurora Chance (Cumberland)</h2>
+        <div class="big-number" id="prob">–%</div>
+        <p style="font-size:0.85rem;color:var(--muted);margin-top:0.3rem">OVATION probability at ~43.8°N</p>
+        <div id="verdict" class="verdict verdict-poor">Checking…</div>
+      </div>
+      <div class="card">
+        <h2>Moon & Darkness</h2>
+        <div class="moon-illum" id="moon-visual"></div>
+        <p style="text-align:center;font-size:0.95rem" id="moon-phase">—</p>
+        <p style="text-align:center;font-size:0.8rem;color:var(--muted)" id="moon-illum-text">—</p>
+      </div>
+    </section>
+
+    <!-- OVATION Map -->
+    <section class="card" style="margin-bottom:1.25rem">
+      <h2>NOAA OVATION Aurora Map (30–90 min forecast)</h2>
+      <div class="map-wrapper">
+        <img class="ovation-img" id="ovation-north"
+             src="https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg"
+             alt="NOAA OVATION Northern Hemisphere Aurora Forecast"
+             onerror="this.src='https://services.swpc.noaa.gov/images/aurora-forecast-northern-hemisphere.jpg'" />
+        <div class="map-label">Northern Hemisphere · Live OVATION</div>
+      </div>
+      <p class="refresh-note" style="margin-top:0.6rem">Cumberland County, ME (≈43.78°N) is marked conceptually near the southern edge. Higher Kp pushes the oval south. Image refreshes every few minutes from NOAA.</p>
+    </section>
+
+    <!-- 3-day Kp Forecast -->
+    <section class="card" style="margin-bottom:1.25rem">
+      <h2>3-Day Kp Forecast (3-hour slots)</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr><th>UTC Slot</th><th>Kp</th><th>Scale</th><th>Cumberland Outlook</th></tr>
+          </thead>
+          <tbody id="kp-forecast-body">
+            <tr><td colspan="4">Loading forecast…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="refresh-note">Source: NOAA Planetary K-index Forecast. G1 = Kp≥5, G2≥6, G3≥7.</p>
+    </section>
+
+    <!-- 27-day Outlook -->
+    <section class="card" style="margin-bottom:1.25rem">
+      <h2>27-Day Outlook (Daily Max Kp)</h2>
+      <div style="overflow-x:auto; max-height:320px; overflow-y:auto">
+        <table>
+          <thead>
+            <tr><th>Date (UTC)</th><th>10.7cm Flux</th><th>A Index</th><th>Max Kp</th><th>Chance</th></tr>
+          </thead>
+          <tbody id="outlook-body">
+            <tr><td colspan="5">Loading 27-day outlook…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="refresh-note">Official NOAA 27-day Space Weather Outlook. Useful for planning; not a night-by-night guarantee.</p>
+    </section>
+
+    <!-- Optimal Viewing -->
+    <section class="grid grid-2">
+      <div class="card">
+        <h2>Optimal Viewing Tips for Cumberland County</h2>
+        <ul class="tips">
+          <li><strong>Kp needed:</strong> Typically Kp 5+ for a chance on the northern horizon; Kp 6–7 for a better display. Strong storms (Kp 7+) can bring vivid lights farther south.</li>
+          <li><strong>Best hours:</strong> 10 pm – 2 am local (EDT/EST). Astronomical darkness is key.</li>
+          <li><strong>Moon:</strong> New moon or thin crescent is ideal. Bright moonlight washes out faint aurora.</li>
+          <li><strong>Location:</strong> Escape Portland light pollution — head north/northwest (e.g. near Freeport, Yarmouth, or inland toward Gray/Windham). Dark northern horizon essential.</li>
+          <li><strong>Weather:</strong> Clear skies required. Check local cloud cover separately.</li>
+          <li><strong>Camera tip:</strong> Use a tripod, high ISO, 5–15 s exposure — cameras often see more than the eye.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Live Data Sources</h2>
+        <ul class="tips">
+          <li>NOAA SWPC OVATION Aurora Model (probability grid)</li>
+          <li>NOAA Planetary K-index (real-time + 3-day forecast)</li>
+          <li>NOAA 27-day Space Weather Outlook</li>
+          <li>Solar wind (Bz, speed, density) available via SWPC</li>
+        </ul>
+        <p style="margin-top:1rem;font-size:0.85rem;color:var(--muted)">
+          All data is fetched live from official NOAA endpoints. This page never stores or modifies forecasts — it only displays the latest available public products.
+        </p>
+        <p style="margin-top:0.75rem;font-size:0.8rem">
+          <a href="https://www.swpc.noaa.gov/" target="_blank" rel="noopener">swpc.noaa.gov</a> ·
+          <a href="https://www.swpc.noaa.gov/products/aurora-30-minute-forecast" target="_blank" rel="noopener">OVATION product</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built for accurate, real-time aurora chasing in Cumberland County, Maine.</p>
+    <p style="margin-top:0.4rem">Data © NOAA / NWS Space Weather Prediction Center · Open source on <a href="https://github.com/aross197/cumberland-aurora-forecast" target="_blank">GitHub</a></p>
+    <p style="margin-top:0.6rem;font-size:0.75rem">Not affiliated with NOAA. Forecasts are probabilistic — clear dark skies and patience still required.</p>
+  </footer>
+
+  <script>
+    const LAT = 43.78;
+    const LON = -70.33;
+
+    // --- Helpers ---
+    function kpColor(kp) {
+      if (kp >= 7) return 'g3';
+      if (kp >= 6) return 'g2';
+      if (kp >= 5) return 'g1';
+      return 'active';
+    }
+    function kpLabel(kp) {
+      if (kp >= 8) return { text: 'G4+ Severe Storm', cls: 'status-storm' };
+      if (kp >= 7) return { text: 'G3 Strong Storm', cls: 'status-storm' };
+      if (kp >= 6) return { text: 'G2 Moderate Storm', cls: 'status-storm' };
+      if (kp >= 5) return { text: 'G1 Minor Storm', cls: 'status-active' };
+      if (kp >= 4) return { text: 'Active', cls: 'status-active' };
+      if (kp >= 3) return { text: 'Unsettled', cls: 'status-active' };
+      return { text: 'Quiet', cls: 'status-quiet' };
+    }
+    function outlookForKp(kp) {
+      if (kp >= 7) return 'Strong chance — look north!';
+      if (kp >= 6) return 'Good chance on northern horizon';
+      if (kp >= 5) return 'Possible low on northern horizon';
+      if (kp >= 4) return 'Low chance, very faint if any';
+      return 'Unlikely visible';
+    }
+
+    // Approximate geomagnetic latitude adjustment for Maine (~55–56° geomag)
+    // OVATION grid is geographic; we sample nearest point.
+    async function fetchOvationProb() {
+      try {
+        const res = await fetch('https://services.swpc.noaa.gov/json/ovation_aurora_latest.json');
+        const data = await res.json();
+        // coordinates: [lon, lat, aurora%]
+        let best = null, bestDist = Infinity;
+        for (const c of data.coordinates) {
+          const dlon = Math.abs(c[0] - (LON < 0 ? LON + 360 : LON));
+          const dlat = Math.abs(c[1] - LAT);
+          const dist = dlon + dlat;
+          if (dist < bestDist) { bestDist = dist; best = c; }
+        }
+        return best ? best[2] : 0;
+      } catch (e) {
+        console.error(e);
+        return null;
+      }
+    }
+
+    async function fetchCurrentKp() {
+      try {
+        const res = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
+        const data = await res.json();
+        // last few entries; find most recent observed
+        const recent = data.slice(-8);
+        const last = recent[recent.length - 1];
+        return { kp: parseFloat(last.Kp), time: last.time_tag };
+      } catch (e) {
+        console.error(e);
+        return null;
+      }
+    }
+
+    async function fetchKpForecast() {
+      try {
+        const res = await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json');
+        return await res.json();
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    }
+
+    async function fetch27Day() {
+      try {
+        const res = await fetch('https://services.swpc.noaa.gov/text/27-day-outlook.txt');
+        const text = await res.text();
+        const lines = text.split('\n').filter(l => /^\d{4} [A-Za-z]{3} \d{2}/.test(l.trim()));
+        return lines.map(l => {
+          const parts = l.trim().split(/\s+/);
+          return {
+            date: parts[0] + ' ' + parts[1] + ' ' + parts[2],
+            flux: parts[3],
+            a: parts[4],
+            kp: parseFloat(parts[5])
+          };
+        });
+      } catch (e) {
+        console.error(e);
+        return [];
+      }
+    }
+
+    // Simple moon phase calculation (approximate illumination)
+    function getMoonPhase(date = new Date()) {
+      // Based on known new moon epoch
+      const synodic = 29.53058867;
+      const knownNew = new Date('2000-01-06T18:14:00Z').getTime();
+      const days = (date.getTime() - knownNew) / 86400000;
+      const age = ((days % synodic) + synodic) % synodic;
+      const illum = 0.5 * (1 - Math.cos(2 * Math.PI * age / synodic));
+      let phase;
+      if (age < 1.85) phase = 'New Moon';
+      else if (age < 7.38) phase = 'Waxing Crescent';
+      else if (age < 9.23) phase = 'First Quarter';
+      else if (age < 14.77) phase = 'Waxing Gibbous';
+      else if (age < 16.61) phase = 'Full Moon';
+      else if (age < 22.15) phase = 'Waning Gibbous';
+      else if (age < 24.0) phase = 'Last Quarter';
+      else phase = 'Waning Crescent';
+      return { age, illumination: Math.round(illum * 100), phase };
+    }
+
+    function renderMoon(moon) {
+      document.getElementById('moon-phase').textContent = moon.phase;
+      document.getElementById('moon-illum-text').textContent = moon.illumination + '% illuminated';
+      const el = document.getElementById('moon-visual');
+      // Simple CSS moon: shadow from the right for waxing, left for waning
+      const isWaxing = moon.age < 14.77;
+      const pct = moon.illumination / 100;
+      if (moon.illumination < 5) {
+        el.style.boxShadow = 'inset 0 0 0 40px #1a1a2e';
+      } else if (isWaxing) {
+        el.style.boxShadow = `inset ${-40 + pct * 40}px 0 0 0 #f5f5f0`;
+      } else {
+        el.style.boxShadow = `inset ${40 - pct * 40}px 0 0 0 #f5f5f0`;
+      }
+    }
+
+    function renderKpBar(kp) {
+      const bar = document.getElementById('kp-bar');
+      bar.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const seg = document.createElement('div');
+        seg.className = 'kp-seg';
+        if (i < Math.floor(kp)) {
+          if (i >= 6) seg.classList.add('g3');
+          else if (i >= 5) seg.classList.add('g2');
+          else if (i >= 4) seg.classList.add('g1');
+          else seg.classList.add('active');
+        }
+        bar.appendChild(seg);
+      }
+    }
+
+    async function updateAll() {
+      // Kp now
+      const kpData = await fetchCurrentKp();
+      if (kpData) {
+        document.getElementById('kp-now').textContent = kpData.kp.toFixed(1);
+        const lab = kpLabel(kpData.kp);
+        const st = document.getElementById('kp-status');
+        st.textContent = lab.text;
+        st.className = 'status-pill ' + lab.cls;
+        renderKpBar(kpData.kp);
+        document.getElementById('kp-updated').textContent = 'Updated: ' + new Date(kpData.time + 'Z').toLocaleString();
+      }
+
+      // OVATION probability
+      const prob = await fetchOvationProb();
+      if (prob !== null) {
+        document.getElementById('prob').textContent = Math.round(prob) + '%';
+        const v = document.getElementById('verdict');
+        if (prob >= 20 || (kpData && kpData.kp >= 6)) {
+          v.textContent = 'Elevated chance — worth checking the northern sky';
+          v.className = 'verdict verdict-good';
+        } else if (prob >= 5 || (kpData && kpData.kp >= 5)) {
+          v.textContent = 'Marginal — possible faint glow on northern horizon';
+          v.className = 'verdict verdict-maybe';
+        } else {
+          v.textContent = 'Low probability tonight from this latitude';
+          v.className = 'verdict verdict-poor';
+        }
+      }
+
+      // Moon
+      renderMoon(getMoonPhase());
+
+      // 3-day forecast
+      const fcst = await fetchKpForecast();
+      const tbody = document.getElementById('kp-forecast-body');
+      if (fcst.length) {
+        tbody.innerHTML = '';
+        // Show next ~24–48 hours of forecast slots
+        const upcoming = fcst.filter(r => r.observed === 'predicted' || new Date(r.time_tag + 'Z') > new Date(Date.now() - 3*3600*1000)).slice(0, 16);
+        upcoming.forEach(r => {
+          const kp = parseFloat(r.kp);
+          const tr = document.createElement('tr');
+          const scale = r.noaa_scale || (kp >= 5 ? 'G' + Math.min(5, Math.floor(kp-4)) : '—');
+          tr.innerHTML = `
+            <td>${r.time_tag.replace('T',' ').slice(0,16)} UTC</td>
+            <td class="kp-cell">${kp.toFixed(1)}</td>
+            <td>${scale}</td>
+            <td>${outlookForKp(kp)}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+
+      // 27-day
+      const outlook = await fetch27Day();
+      const obody = document.getElementById('outlook-body');
+      if (outlook.length) {
+        obody.innerHTML = '';
+        outlook.forEach(d => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${d.date}</td>
+            <td>${d.flux}</td>
+            <td>${d.a}</td>
+            <td class="kp-cell">${d.kp}</td>
+            <td>${outlookForKp(d.kp)}</td>`;
+          obody.appendChild(tr);
+        });
+      }
+
+      // Refresh OVATION image cache-bust
+      const img = document.getElementById('ovation-north');
+      img.src = 'https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg?t=' + Date.now();
+    }
+
+    updateAll();
+    setInterval(updateAll, 5 * 60 * 1000); // refresh every 5 min
+  </script>
+</body>
+</html>
